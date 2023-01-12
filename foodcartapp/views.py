@@ -1,10 +1,12 @@
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Product, Order, OrderItem
 
@@ -63,20 +65,22 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
+
     try:
         order_raw = request.data
-
-        print(order_raw)
-
-        phone_number = PhoneNumber.from_string(order_raw['phonenumber'])
-        print(phone_number)
 
         order = Order.objects.create(
             name=order_raw['firstname'],
             surname=order_raw['lastname'],
-            phone_number=phone_number,
+            phone_number=PhoneNumber.from_string(order_raw['phonenumber']),
             address=order_raw['address']
         )
+
+        if not order_raw['products']:
+            order.delete()
+            return Response({
+                'error': 'Product is empty',
+            }, status=status.HTTP_200_OK)
 
         for product in order_raw['products']:
             try:
@@ -90,8 +94,20 @@ def register_order(request):
                 continue
 
     except ValueError:
-        return JsonResponse({
+        order.delete()
+        return Response({
             'error': 'bla bla bla',
-        })
+        }, status=status.HTTP_200_OK)
+    except TypeError:
+        order.delete()
+        return Response({
+            'error': 'Type error',
+        }, status=status.HTTP_200_OK)
+
+    except KeyError:
+        order.delete()
+        return Response({
+            'error': 'No products',
+        }, status=status.HTTP_200_OK)
 
     return JsonResponse({})
