@@ -1,5 +1,7 @@
 import json
 
+import django.db.utils
+import phonenumbers.phonenumberutil
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, Http404
 from django.templatetags.static import static
@@ -69,20 +71,44 @@ def register_order(request):
     try:
         order_raw = request.data
 
+        firstname = order_raw['firstname']
+        surname = order_raw['lastname']
+        phone_number = PhoneNumber.from_string(order_raw['phonenumber'])
+        address = order_raw['address']
+        products = order_raw['products']
+
+        if not isinstance(firstname, str):
+            return Response(
+                {'error': 'Wrong name'},
+                status=status.HTTP_200_OK
+            )
+
+        if not isinstance(surname, str):
+            return Response(
+                {'error': 'Wrong lastname'},
+                status=status.HTTP_200_OK
+            )
+
+        if not phone_number.is_valid():
+            return Response(
+                {'error': 'Phone number is invalid'},
+                status=status.HTTP_200_OK
+            )
+
         order = Order.objects.create(
-            name=order_raw['firstname'],
-            surname=order_raw['lastname'],
-            phone_number=PhoneNumber.from_string(order_raw['phonenumber']),
-            address=order_raw['address']
+            name=firstname,
+            surname=surname,
+            phone_number=phone_number,
+            address=address
         )
 
-        if not order_raw['products']:
+        if not products:
             order.delete()
             return Response({
                 'error': 'Product is empty',
             }, status=status.HTTP_200_OK)
 
-        for product in order_raw['products']:
+        for product in products:
             try:
                 item = Product.objects.get(pk=product['product'])
                 order_item = OrderItem.objects.create(
@@ -91,7 +117,10 @@ def register_order(request):
                     order=order
                 )
             except ObjectDoesNotExist:
-                continue
+                order.delete()
+                return Response({
+                    'error': 'Wrong product',
+                }, status=status.HTTP_200_OK)
 
     except ValueError:
         order.delete()
@@ -105,9 +134,19 @@ def register_order(request):
         }, status=status.HTTP_200_OK)
 
     except KeyError:
-        order.delete()
         return Response({
-            'error': 'No products',
+            'error': 'Key error',
         }, status=status.HTTP_200_OK)
+
+    except django.db.utils.IntegrityError:
+        return Response(
+            {'error': 'Name is null'},
+            status=status.HTTP_200_OK
+        )
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return Response(
+            {'error': 'Wrong phone number'},
+            status=status.HTTP_200_OK
+        )
 
     return JsonResponse({})
