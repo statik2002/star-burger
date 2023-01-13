@@ -7,6 +7,7 @@ from django.http import JsonResponse, Http404
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -65,8 +66,29 @@ def product_list_api(request):
     })
 
 
+def validate(order_raw):
+
+    errors = []
+
+    if 'firstname' not in order_raw:
+        errors.append('First name is required.')
+    if 'lastname' not in order_raw:
+        errors.append('Last name is required.')
+    if 'phonenumber' not in order_raw:
+        errors.append('Phonenumber is required.')
+    if 'address' not in order_raw:
+        errors.append('Address is required.')
+    if 'products' not in order_raw:
+        errors.append('Products is required.')
+
+    if errors:
+        raise ValidationError(errors)
+
+
 @api_view(['POST'])
 def register_order(request):
+
+    validate(request.data)
 
     try:
         order_raw = request.data
