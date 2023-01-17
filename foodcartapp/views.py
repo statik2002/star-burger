@@ -8,8 +8,12 @@ from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import ListField, IntegerField
 from rest_framework.response import Response
 from rest_framework import status
+
+from rest_framework.serializers import Serializer, ModelSerializer
+from rest_framework.serializers import CharField
 
 from .models import Product, Order, OrderItem
 
@@ -66,109 +70,59 @@ def product_list_api(request):
     })
 
 
-def validate(order_raw):
+class OrderItemSerialiser(Serializer):
 
-    errors = []
+    product = IntegerField()
+    quantity = IntegerField()
 
-    if 'firstname' not in order_raw:
-        errors.append('First name is required.')
-    if 'lastname' not in order_raw:
-        errors.append('Last name is required.')
-    if 'phonenumber' not in order_raw:
-        errors.append('Phonenumber is required.')
-    if 'address' not in order_raw:
-        errors.append('Address is required.')
-    if 'products' not in order_raw:
-        errors.append('Products is required.')
+    def validate_product(self, value):
+        if not value:
+            raise ValidationError('Empty prduct id')
+        return value
 
-    if errors:
-        raise ValidationError(errors)
+    def validate_quantity(self, value):
+        if not value:
+            raise ValidationError('Empty product quantity')
+        return value
+
+
+class OrderSerializer(ModelSerializer):
+
+    products = ListField(child=OrderItemSerialiser())
+
+    class Meta:
+        model = Order
+        fields = ('firstname', 'lastname', 'phonenumber', 'address', 'products')
 
 
 @api_view(['POST'])
 def register_order(request):
 
-    validate(request.data)
+    order_serializer = OrderSerializer(data=request.data)
+    order_serializer.is_valid(raise_exception=True)
 
-    try:
-        order_raw = request.data
+    order = Order.objects.create(
+        firstname=order_serializer.validated_data['firstname'],
+        lastname=order_serializer.validated_data['lastname'],
+        phonenumber=order_serializer.validated_data['phonenumber'],
+        address=order_serializer.validated_data['address']
+    )
 
-        firstname = order_raw['firstname']
-        surname = order_raw['lastname']
-        phone_number = PhoneNumber.from_string(order_raw['phonenumber'])
-        address = order_raw['address']
-        products = order_raw['products']
+    if not order_serializer.validated_data['products']:
+        return Response({
+            'error': 'Products is empty',
+        }, status=status.HTTP_200_OK)
 
-        if not isinstance(firstname, str):
-            return Response(
-                {'error': 'Wrong name'},
-                status=status.HTTP_200_OK
+    for product_item in order_serializer.validated_data['products']:
+        try:
+            order_item = OrderItem.objects.create(
+                item=Product.objects.get(pk=product_item['product']),
+                quantity=product_item['quantity'],
+                order=order
             )
-
-        if not isinstance(surname, str):
-            return Response(
-                {'error': 'Wrong lastname'},
-                status=status.HTTP_200_OK
-            )
-
-        if not phone_number.is_valid():
-            return Response(
-                {'error': 'Phone number is invalid'},
-                status=status.HTTP_200_OK
-            )
-
-        order = Order.objects.create(
-            name=firstname,
-            surname=surname,
-            phone_number=phone_number,
-            address=address
-        )
-
-        if not products:
-            order.delete()
+        except ObjectDoesNotExist:
             return Response({
-                'error': 'Product is empty',
+                'error': f'Product with code {product_item["product"]} does not exist',
             }, status=status.HTTP_200_OK)
 
-        for product in products:
-            try:
-                item = Product.objects.get(pk=product['product'])
-                order_item = OrderItem.objects.create(
-                    item=item,
-                    quantity=product['quantity'],
-                    order=order
-                )
-            except ObjectDoesNotExist:
-                order.delete()
-                return Response({
-                    'error': 'Wrong product',
-                }, status=status.HTTP_200_OK)
-
-    except ValueError:
-        order.delete()
-        return Response({
-            'error': 'bla bla bla',
-        }, status=status.HTTP_200_OK)
-    except TypeError:
-        order.delete()
-        return Response({
-            'error': 'Type error',
-        }, status=status.HTTP_200_OK)
-
-    except KeyError:
-        return Response({
-            'error': 'Key error',
-        }, status=status.HTTP_200_OK)
-
-    except django.db.utils.IntegrityError:
-        return Response(
-            {'error': 'Name is null'},
-            status=status.HTTP_200_OK
-        )
-    except phonenumbers.phonenumberutil.NumberParseException:
-        return Response(
-            {'error': 'Wrong phone number'},
-            status=status.HTTP_200_OK
-        )
-
-    return JsonResponse({})
+    return Response({})

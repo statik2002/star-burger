@@ -133,9 +133,9 @@ class OrderItem(models.Model):
 
 class Order(models.Model):
 
-    name = models.CharField('Имя', max_length=100, db_index=True)
-    surname = models.CharField('Фамилия', max_length=200, db_index=True)
-    phone_number = PhoneNumberField(max_length=12)
+    firstname = models.CharField('Имя', max_length=100, db_index=True)
+    lastname = models.CharField('Фамилия', max_length=200, db_index=True)
+    phonenumber = PhoneNumberField(max_length=12)
     address = models.CharField('Адрес', max_length=250, default='')
 
     class Meta:
@@ -143,6 +143,6 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f'{self.name} {self.surname} {str(self.phone_number)}'
+        return f'{self.firstname} {self.lastname} {str(self.phonenumber)}'
 
 
