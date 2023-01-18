@@ -88,7 +88,7 @@ class OrderItemSerialiser(Serializer):
 
 class OrderSerializer(ModelSerializer):
 
-    products = ListField(child=OrderItemSerialiser())
+    products = ListField(child=OrderItemSerialiser(), write_only=True)
 
     class Meta:
         model = Order
@@ -125,4 +125,4 @@ def register_order(request):
                 'error': f'Product with code {product_item["product"]} does not exist',
             }, status=status.HTTP_200_OK)
 
-    return Response({})
+    return Response(order_serializer.data)
