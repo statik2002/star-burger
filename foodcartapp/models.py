@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models import Count, Prefetch, Aggregate, F, Sum
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -129,6 +130,14 @@ class OrderItem(models.Model):
     item = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='products')
     quantity = models.IntegerField()
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
+    total = models.DecimalField('Total', max_digits=8, decimal_places=2, null=True)
+
+
+class OrderQuerySet(models.QuerySet):
+
+    def calc_order(self):
+
+        return self.prefetch_related('order_items').annotate(total=Sum(F('order_items__quantity') * F('order_items__item__price')))
 
 
 class Order(models.Model):
@@ -141,6 +150,8 @@ class Order(models.Model):
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+
+    objects = OrderQuerySet.as_manager()
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} {str(self.phonenumber)}'
