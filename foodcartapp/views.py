@@ -115,10 +115,12 @@ def register_order(request):
 
     for product_item in order_serializer.validated_data['products']:
         try:
+            product = Product.objects.get(pk=product_item['product'])
             order_item = OrderItem.objects.create(
-                item=Product.objects.get(pk=product_item['product']),
+                item=product,
                 quantity=product_item['quantity'],
-                order=order
+                order=order,
+                price=product.price
             )
         except ObjectDoesNotExist:
             return Response({

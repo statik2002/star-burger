@@ -128,16 +128,16 @@ class RestaurantMenuItem(models.Model):
 class OrderItem(models.Model):
 
     item = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='products')
-    quantity = models.IntegerField()
+    quantity = models.IntegerField('Количество')
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
-    total = models.DecimalField('Total', max_digits=8, decimal_places=2, null=True)
+    price = models.DecimalField('Цена продукта', max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
 
 
 class OrderQuerySet(models.QuerySet):
 
     def calc_order(self):
 
-        return self.prefetch_related('order_items').annotate(total=Sum(F('order_items__quantity') * F('order_items__item__price')))
+        return self.prefetch_related('order_items').annotate(total=Sum(F('order_items__quantity') * F('order_items__price')))
 
 
 class Order(models.Model):

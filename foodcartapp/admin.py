@@ -109,7 +109,11 @@ class ProductAdmin(admin.ModelAdmin):
 class OrderItemAdmin(admin.TabularInline):
     model = OrderItem
 
+    extra = 1
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
+
+
