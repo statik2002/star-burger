@@ -3,6 +3,7 @@ import json
 import django.db.utils
 import phonenumbers.phonenumberutil
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import JsonResponse, Http404
 from django.templatetags.static import static
 from phonenumber_field.phonenumber import PhoneNumber
@@ -96,6 +97,7 @@ class OrderSerializer(ModelSerializer):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def register_order(request):
 
     order_serializer = OrderSerializer(data=request.data)

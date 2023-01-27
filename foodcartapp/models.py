@@ -127,10 +127,14 @@ class RestaurantMenuItem(models.Model):
 
 class OrderItem(models.Model):
 
-    item = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='products')
+    item = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='products', verbose_name='Продукт')
     quantity = models.IntegerField('Количество')
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
     price = models.DecimalField('Цена продукта', max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
+
+    def clean(self):
+        if self.price is None:
+            self.price = self.item.price
 
 
 class OrderQuerySet(models.QuerySet):

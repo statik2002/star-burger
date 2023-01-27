@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import transaction
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
@@ -111,9 +112,29 @@ class OrderItemAdmin(admin.TabularInline):
 
     extra = 1
 
+    fields = ('item', 'quantity', 'get_product_price', 'price')
+    readonly_fields = ('get_product_price', )
+
+    @admin.display(description='Цена в каталоге')
+    def get_product_price(self, obj):
+        return obj.item.price
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
+
+    @transaction.atomic
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for obj in formset.deleted_objects:
+            obj.delete()
+
+        for instance in instances:
+
+            instance.price = instance.price
+            instance.save()
+        formset.save_m2m()
 
 
