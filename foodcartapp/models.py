@@ -146,10 +146,18 @@ class OrderQuerySet(models.QuerySet):
 
 class Order(models.Model):
 
+    ORDER_STATUS_CHOICES = [
+        ('AC', 'Принят'),
+        ('AS', 'Сборка'),
+        ('DE', 'Доставка'),
+        ('CO', 'Выполнено'),
+    ]
+
     firstname = models.CharField('Имя', max_length=100, db_index=True)
     lastname = models.CharField('Фамилия', max_length=200, db_index=True)
     phonenumber = PhoneNumberField(max_length=12)
     address = models.CharField('Адрес', max_length=250, default='')
+    order_status = models.CharField('Статус заказа', max_length=3, choices=ORDER_STATUS_CHOICES, default='AC')
 
     class Meta:
         verbose_name = 'Заказ'
