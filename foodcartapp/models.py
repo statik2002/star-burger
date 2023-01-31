@@ -154,6 +154,11 @@ class Order(models.Model):
         ('CO', 'Выполнено'),
     ]
 
+    ORDER_PAYMENT_CHOICES = [
+        ('CA', 'Наличка'),
+        ('EL', 'Электронно'),
+    ]
+
     firstname = models.CharField('Имя', max_length=100, db_index=True)
     lastname = models.CharField('Фамилия', max_length=200, db_index=True)
     phonenumber = PhoneNumberField(max_length=12)
@@ -163,6 +168,7 @@ class Order(models.Model):
     registered_datetime = models.DateTimeField('Время регистрации заказа', default=timezone.now, db_index=True)
     called_datetime = models.DateTimeField('Время звонка', blank=True, null=True, db_index=True)
     delivered_datetime = models.DateTimeField('Время доставки', blank=True, null=True, db_index=True)
+    payment_type = models.CharField('Тип оплаты', max_length=3, choices=ORDER_PAYMENT_CHOICES, default='CA', db_index=True)
 
     class Meta:
         verbose_name = 'Заказ'
