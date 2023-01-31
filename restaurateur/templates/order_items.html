@@ -1,6 +1,7 @@
 {% extends 'base_restaurateur_page.html' %}
 
 {% load admin_urls %}
+{% load humanize %}
 
 {% block title %}Необработанные заказы | Star Burger{% endblock %}
 
@@ -28,7 +29,7 @@
       <tr>
         <td>{{ item.pk }}</td>
         <td>{{ item.get_order_status_display }}</td>
-        <td>{{ item.total }} &#8381;</td>
+        <td>{{ item.total|intcomma }} &#8381;</td>
         <td>{{ item.firstname }} {{ item.lastname }}</td>
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
