@@ -133,6 +133,10 @@ class OrderItem(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
     price = models.DecimalField('Цена продукта', max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
 
+    class Meta:
+        verbose_name = 'Элемент заказа'
+        verbose_name_plural = 'Элементы заказа'
+
     def clean(self):
         if self.price is None:
             self.price = self.item.price
@@ -141,8 +145,24 @@ class OrderItem(models.Model):
 class OrderQuerySet(models.QuerySet):
 
     def calc_order(self):
+        return self.prefetch_related('order_items').annotate(
+            total=Sum(F('order_items__quantity') * F('order_items__price'))
+        )
 
-        return self.prefetch_related('order_items').annotate(total=Sum(F('order_items__quantity') * F('order_items__price')))
+    def select_restaurants(self):
+
+        return self.prefetch_related('order_items').prefetch_related('order_items__item').annotate(ttt=Count('order_items__item'))
+        #order_products = [order.order_items.item.all() for order in orders]
+
+        #print(orders.ttt)
+
+        #for order_product in order_products:
+        #    restaurants = RestaurantMenuItem.objects.select_related('restaurants').filter(product__in=)
+
+        #for order in self:
+        #    order.restaurants = [1, 2]
+
+        #return self
 
 
 class Order(models.Model):
@@ -177,6 +197,6 @@ class Order(models.Model):
     objects = OrderQuerySet.as_manager()
 
     def __str__(self):
-        return f'{self.firstname} {self.lastname} {str(self.phonenumber)}'
+        return f'{self.firstname} {self.lastname} ({str(self.phonenumber)})'
 
 

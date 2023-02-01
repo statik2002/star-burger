@@ -128,6 +128,8 @@ class OrderItemAdmin(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
 
+    list_display = ('id', 'lastname', 'firstname', 'phonenumber')
+
     @transaction.atomic
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
