@@ -142,6 +142,21 @@ class OrderItem(models.Model):
             self.price = self.item.price
 
 
+def restaurants_serializer(restaurants):
+
+    serialized_restaurants = []
+
+    for restaurant in restaurants:
+        serialized_restaurants.append(
+            {
+                'name': restaurant.name,
+                'available_products': [menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability]
+            }
+        )
+
+    return serialized_restaurants
+
+
 class OrderQuerySet(models.QuerySet):
 
     def calc_order(self):
@@ -151,18 +166,19 @@ class OrderQuerySet(models.QuerySet):
 
     def select_restaurants(self):
 
-        return self.prefetch_related('order_items').prefetch_related('order_items__item').annotate(ttt=Count('order_items__item'))
-        #order_products = [order.order_items.item.all() for order in orders]
+        restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
+        serialized_restaurants = restaurants_serializer(restaurants)
 
-        #print(orders.ttt)
+        for order in self:
+            available_restaurants = []
+            order_items_raw = {order_item.item.name for order_item in order.order_items.all()}
+            for restaurant in serialized_restaurants:
+                if order_items_raw.issubset(restaurant['available_products']):
+                    available_restaurants.append(restaurant)
 
-        #for order_product in order_products:
-        #    restaurants = RestaurantMenuItem.objects.select_related('restaurants').filter(product__in=)
+            order.available_restaurants = available_restaurants
 
-        #for order in self:
-        #    order.restaurants = [1, 2]
-
-        #return self
+        return self
 
 
 class Order(models.Model):
