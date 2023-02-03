@@ -39,14 +39,18 @@
         <td>{{ item.address }}</td>
         <td>{{ item.comment|safe }}</td>
         <td>
-          <details>
-            <summary>Подробнее</summary>
-            <ul>
-              {% for restaurant in item.available_restaurants %}
-              <li>{{ restaurant.name }}</li>
-              {% endfor %}
-            </ul>
-          </details>
+          {% if item.production_restaurant %}
+            Готовит {{ item.production_restaurant }}
+          {% else %}
+            <details>
+              <summary>Подробнее</summary>
+              <ul>
+                {% for restaurant in item.available_restaurants %}
+                <li>{{ restaurant.name }}</li>
+                {% endfor %}
+              </ul>
+            </details>
+          {% endif %}
         </td>
         <td><a href="{% url 'admin:foodcartapp_order_change' item.pk %}?next={{ path|urlencode:'' }}">Редактировать</a> </td>
       </tr>

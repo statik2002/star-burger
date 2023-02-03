@@ -124,24 +124,45 @@ class OrderItemAdmin(admin.TabularInline):
         return obj.item.price
 
 
+def restaurants_serializer(restaurants):
+
+    serialized_restaurants = []
+
+    for restaurant in restaurants:
+        serialized_restaurants.append(
+            {
+                'name': restaurant.name,
+                'available_products': [
+                    menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
+                'id': restaurant.pk
+            }
+        )
+
+    return serialized_restaurants
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
 
-    list_display = ('id', 'lastname', 'firstname', 'phonenumber')
+    list_display = ('id', 'lastname', 'firstname', 'phonenumber', 'order_status')
 
     @transaction.atomic
     def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
+        inline_instances = formset.save(commit=False)
+        form_instance = form.save(commit=False)
 
         for obj in formset.deleted_objects:
             obj.delete()
 
-        for instance in instances:
+        if form_instance.production_restaurant:
+                form_instance.order_status = 'AS'
 
+        for instance in inline_instances:
             instance.price = instance.price
             instance.save()
         formset.save_m2m()
+        form_instance.save()
 
     def response_change(self, request, obj):
         res = super(OrderAdmin, self).response_change(request, obj)
@@ -155,5 +176,20 @@ class OrderAdmin(admin.ModelAdmin):
         else:
             return res
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "production_restaurant":
+            order = Order.objects.prefetch_related('order_items__item').get(pk=request.resolver_match.kwargs.get('object_id'))
+            items_in_order = {order_item.item.name for order_item in order.order_items.all()}
+            restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
+            serialized_restaurants = restaurants_serializer(restaurants)
 
+            restaurants_ids = []
+            for restaurant in serialized_restaurants:
+                if items_in_order.issubset(restaurant['available_products']):
+                    restaurants_ids.append(restaurant['id'])
+
+            selected_restaurant = Restaurant.objects.filter(id__in=restaurants_ids)
+            kwargs["queryset"] = selected_restaurant
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 

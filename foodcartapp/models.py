@@ -150,7 +150,9 @@ def restaurants_serializer(restaurants):
         serialized_restaurants.append(
             {
                 'name': restaurant.name,
-                'available_products': [menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability]
+                'available_products': [
+                    menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
+                'id': restaurant.pk
             }
         )
 
@@ -171,9 +173,9 @@ class OrderQuerySet(models.QuerySet):
 
         for order in self:
             available_restaurants = []
-            order_items_raw = {order_item.item.name for order_item in order.order_items.all()}
+            items_in_order = {order_item.item.name for order_item in order.order_items.all()}
             for restaurant in serialized_restaurants:
-                if order_items_raw.issubset(restaurant['available_products']):
+                if items_in_order.issubset(restaurant['available_products']):
                     available_restaurants.append(restaurant)
 
             order.available_restaurants = available_restaurants
@@ -205,6 +207,7 @@ class Order(models.Model):
     called_datetime = models.DateTimeField('Время звонка', blank=True, null=True, db_index=True)
     delivered_datetime = models.DateTimeField('Время доставки', blank=True, null=True, db_index=True)
     payment_type = models.CharField('Тип оплаты', max_length=3, choices=ORDER_PAYMENT_CHOICES, default='CA', db_index=True)
+    production_restaurant = models.ForeignKey(Restaurant, verbose_name='Заказ готовит ресторан', on_delete=models.CASCADE, related_name='production_restaurant', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Заказ'
