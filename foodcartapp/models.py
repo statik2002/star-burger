@@ -9,24 +9,8 @@ from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
 from addresses.models import Place
-
-
-def fetch_coordinates(apikey, address):
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(base_url, params={
-        "geocode": address,
-        "apikey": apikey,
-        "format": "json",
-    })
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-    if not found_places:
-        return None
-
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lat, lon
+from foodcartapp.utils import fetch_coordinates
+from star_burger import settings
 
 
 class Restaurant(models.Model):
@@ -150,12 +134,17 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+def validate_price(value):
+    if not value:
+        return 0.0
+
+
 class OrderItem(models.Model):
 
     item = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='products', verbose_name='Продукт')
-    quantity = models.IntegerField('Количество')
+    quantity = models.IntegerField('Количество', validators=[MinValueValidator(1)])
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='order_items')
-    price = models.DecimalField('Цена продукта', max_digits=8, decimal_places=2, validators=[MinValueValidator(0)])
+    price = models.DecimalField('Цена продукта', max_digits=8, decimal_places=2, validators=[MinValueValidator(0)], blank=True)
 
     class Meta:
         verbose_name = 'Элемент заказа'
@@ -167,11 +156,9 @@ class OrderItem(models.Model):
 
 
 def restaurants_serializer(restaurants):
-
     serialized_restaurants = []
 
     for restaurant in restaurants:
-
         serialized_restaurants.append(
             {
                 'name': restaurant.name,
@@ -194,10 +181,12 @@ class OrderQuerySet(models.QuerySet):
 
     def select_restaurants(self):
 
-        restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
+        restaurants = Restaurant.objects.prefetch_related('menu_items__product')
         serialized_restaurants = restaurants_serializer(restaurants)
 
-        restaurants_and_orders_addresses = [serialized_restaurant['address'] for serialized_restaurant in serialized_restaurants]
+        restaurants_and_orders_addresses = [
+            serialized_restaurant['address'] for serialized_restaurant in serialized_restaurants
+        ]
         restaurants_and_orders_addresses += [order.address for order in self]
 
         places = Place.objects.filter(address__in=restaurants_and_orders_addresses)
@@ -209,8 +198,8 @@ class OrderQuerySet(models.QuerySet):
                 if items_in_order.issubset(restaurant['available_products']):
                     order_place = list(filter(lambda place: (place.address == order.address), places))
                     if not order_place:
-                        coord = fetch_coordinates('2ebc9a06-32c0-432b-8c58-856ea874b577', order.address)
-                        order_place = Place.objects.create(address=order.address, lat=coord[0], lon=coord[1],
+                        coordinates = fetch_coordinates(settings.YANDEX_GEO_API_KEY, order.address)
+                        order_place = Place.objects.create(address=order.address, lat=coordinates[0], lon=coordinates[1],
                                                            last_updated=timezone.now())
                     else:
                         order_place = order_place[0]
@@ -218,7 +207,7 @@ class OrderQuerySet(models.QuerySet):
                     try:
                         restaurant_place = list(filter(lambda place: (place.address == restaurant['address']), places))
                     except ObjectDoesNotExist:
-                        restaurant_coord = fetch_coordinates('2ebc9a06-32c0-432b-8c58-856ea874b577', restaurant.address)
+                        restaurant_coord = fetch_coordinates(settings.YANDEX_GEO_API_KEY, restaurant.address)
                         restaurant_place = Place.objects.create(address=restaurant['address'], lat=restaurant_coord[0], lon=restaurant_coord[1], last_updated=timezone.now())
 
                     restaurant['distance'] = int(distance.distance(order_place.get_coordinates(), restaurant_place[0].get_coordinates()).km)

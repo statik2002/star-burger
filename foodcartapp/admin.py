@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.db import transaction
+from django.forms import forms, NumberInput
 from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
@@ -123,6 +124,11 @@ class OrderItemAdmin(admin.TabularInline):
     def get_product_price(self, obj):
         return obj.item.price
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name == 'quantity':
+            kwargs['widget'] = NumberInput(attrs={'min': '1'})
+        return super(OrderItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
 
 def restaurants_serializer(restaurants):
 
@@ -156,12 +162,18 @@ class OrderAdmin(admin.ModelAdmin):
         for obj in formset.deleted_objects:
             obj.delete()
 
-        if form_instance.production_restaurant:
-                form_instance.order_status = 'AS'
+        if not inline_instances:
+            for instance in inline_instances:
+                instance.price = Product.objects.get(instance).price
+                instance.save()
+        else:
+            for instance in inline_instances:
+                instance.price = instance.price
+                instance.save()
 
-        for instance in inline_instances:
-            instance.price = instance.price
-            instance.save()
+        if form_instance.production_restaurant:
+            form_instance.order_status = 'AS'
+
         formset.save_m2m()
         form_instance.save()
 

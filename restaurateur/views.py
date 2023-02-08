@@ -92,8 +92,9 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.prefetch_related('order_items__item').prefetch_related('production_restaurant').\
-        calc_order().exclude(order_status='CO').select_restaurants()
+    orders = Order.objects.prefetch_related('order_items__item').calc_order().\
+        exclude(order_status='CO').prefetch_related('production_restaurant').\
+        order_by('-id').select_restaurants()
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders,
