@@ -1,8 +1,32 @@
+import requests
+from django.core.exceptions import ObjectDoesNotExist
+from geopy import distance
+from operator import itemgetter
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import Count, Prefetch, Aggregate, F, Sum
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+
+from addresses.models import Place
+
+
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lat, lon
 
 
 class Restaurant(models.Model):
@@ -147,12 +171,14 @@ def restaurants_serializer(restaurants):
     serialized_restaurants = []
 
     for restaurant in restaurants:
+
         serialized_restaurants.append(
             {
                 'name': restaurant.name,
                 'available_products': [
                     menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
-                'id': restaurant.pk
+                'id': restaurant.pk,
+                'address': restaurant.address,
             }
         )
 
@@ -162,7 +188,7 @@ def restaurants_serializer(restaurants):
 class OrderQuerySet(models.QuerySet):
 
     def calc_order(self):
-        return self.prefetch_related('order_items').annotate(
+        return self.annotate(
             total=Sum(F('order_items__quantity') * F('order_items__price'))
         )
 
@@ -171,14 +197,34 @@ class OrderQuerySet(models.QuerySet):
         restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
         serialized_restaurants = restaurants_serializer(restaurants)
 
+        restaurants_and_orders_addresses = [serialized_restaurant['address'] for serialized_restaurant in serialized_restaurants]
+        restaurants_and_orders_addresses += [order.address for order in self]
+
+        places = Place.objects.filter(address__in=restaurants_and_orders_addresses)
+
         for order in self:
             available_restaurants = []
             items_in_order = {order_item.item.name for order_item in order.order_items.all()}
             for restaurant in serialized_restaurants:
                 if items_in_order.issubset(restaurant['available_products']):
+                    order_place = list(filter(lambda place: (place.address == order.address), places))
+                    if not order_place:
+                        coord = fetch_coordinates('2ebc9a06-32c0-432b-8c58-856ea874b577', order.address)
+                        order_place = Place.objects.create(address=order.address, lat=coord[0], lon=coord[1],
+                                                           last_updated=timezone.now())
+                    else:
+                        order_place = order_place[0]
+
+                    try:
+                        restaurant_place = list(filter(lambda place: (place.address == restaurant['address']), places))
+                    except ObjectDoesNotExist:
+                        restaurant_coord = fetch_coordinates('2ebc9a06-32c0-432b-8c58-856ea874b577', restaurant.address)
+                        restaurant_place = Place.objects.create(address=restaurant['address'], lat=restaurant_coord[0], lon=restaurant_coord[1], last_updated=timezone.now())
+
+                    restaurant['distance'] = int(distance.distance(order_place.get_coordinates(), restaurant_place[0].get_coordinates()).km)
                     available_restaurants.append(restaurant)
 
-            order.available_restaurants = available_restaurants
+            order.available_restaurants = sorted(available_restaurants, key=itemgetter('distance'), reverse=True)
 
         return self
 

@@ -28,31 +28,31 @@
       <th>Ссылка на админку</th>
     </tr>
 
-    {% for item in order_items %}
+    {% for order_item in order_items %}
       <tr>
-        <td>{{ item.pk }}</td>
-        <td>{{ item.get_order_status_display }}</td>
-        <td>{{ item.get_payment_type_display }}</td>
-        <td>{{ item.total|intcomma }} &#8381;</td>
-        <td>{{ item.firstname }} {{ item.lastname }}</td>
-        <td>{{ item.phonenumber }}</td>
-        <td>{{ item.address }}</td>
-        <td>{{ item.comment|safe }}</td>
+        <td>{{ order_item.pk }}</td>
+        <td>{{ order_item.get_order_status_display }}</td>
+        <td>{{ order_item.get_payment_type_display }}</td>
+        <td>{{ order_item.total|intcomma }} &#8381;</td>
+        <td>{{ order_item.firstname }} {{ order_item.lastname }}</td>
+        <td>{{ order_item.phonenumber }}</td>
+        <td>{{ order_item.address }}</td>
+        <td>{{ order_item.comment|safe }}</td>
         <td>
-          {% if item.production_restaurant %}
-            Готовит {{ item.production_restaurant }}
+          {% if order_item.production_restaurant %}
+            Готовит {{ order_item.production_restaurant }}
           {% else %}
             <details>
               <summary>Подробнее</summary>
-              <ul>
-                {% for restaurant in item.available_restaurants %}
-                <li>{{ restaurant.name }}</li>
+              <ul>Могут приготовить:
+                {% for restaurant in order_item.available_restaurants %}
+                <li>{{ restaurant.name }} - {{ restaurant.distance }} Км. {{ order_item.address }}</li>
                 {% endfor %}
               </ul>
             </details>
           {% endif %}
         </td>
-        <td><a href="{% url 'admin:foodcartapp_order_change' item.pk %}?next={{ path|urlencode:'' }}">Редактировать</a> </td>
+        <td><a href="{% url 'admin:foodcartapp_order_change' order_item.pk %}?next={{ path|urlencode:'' }}">Редактировать</a> </td>
       </tr>
     {% endfor %}
    </table>

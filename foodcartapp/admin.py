@@ -134,7 +134,8 @@ def restaurants_serializer(restaurants):
                 'name': restaurant.name,
                 'available_products': [
                     menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
-                'id': restaurant.pk
+                'id': restaurant.pk,
+                'address': restaurant.address,
             }
         )
 
@@ -177,19 +178,24 @@ class OrderAdmin(admin.ModelAdmin):
             return res
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "production_restaurant":
-            order = Order.objects.prefetch_related('order_items__item').get(pk=request.resolver_match.kwargs.get('object_id'))
-            items_in_order = {order_item.item.name for order_item in order.order_items.all()}
-            restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
-            serialized_restaurants = restaurants_serializer(restaurants)
+        if not db_field.name == "production_restaurant":
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-            restaurants_ids = []
-            for restaurant in serialized_restaurants:
-                if items_in_order.issubset(restaurant['available_products']):
-                    restaurants_ids.append(restaurant['id'])
+        if not request.resolver_match.kwargs.get('object_id'):
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-            selected_restaurant = Restaurant.objects.filter(id__in=restaurants_ids)
-            kwargs["queryset"] = selected_restaurant
+        order = Order.objects.prefetch_related('order_items__item').get(pk=request.resolver_match.kwargs.get('object_id'))
+        items_in_order = {order_item.item.name for order_item in order.order_items.all()}
+        restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
+        serialized_restaurants = restaurants_serializer(restaurants)
+
+        restaurants_ids = []
+        for restaurant in serialized_restaurants:
+            if items_in_order.issubset(restaurant['available_products']):
+                restaurants_ids.append(restaurant['id'])
+
+        selected_restaurant = Restaurant.objects.filter(id__in=restaurants_ids)
+        kwargs["queryset"] = selected_restaurant
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
