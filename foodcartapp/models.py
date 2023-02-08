@@ -199,8 +199,10 @@ class OrderQuerySet(models.QuerySet):
                     order_place = list(filter(lambda place: (place.address == order.address), places))
                     if not order_place:
                         coordinates = fetch_coordinates(settings.YANDEX_GEO_API_KEY, order.address)
-                        order_place = Place.objects.create(address=order.address, lat=coordinates[0], lon=coordinates[1],
-                                                           last_updated=timezone.now())
+                        order_place, created = Place.objects.update_or_create(
+                            address=order.address,
+                            defaults={'lat': coordinates[0], 'lon': coordinates[1]}
+                        )
                     else:
                         order_place = order_place[0]
 
