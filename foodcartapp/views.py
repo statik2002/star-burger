@@ -1,12 +1,7 @@
-import json
-
-import django.db.utils
-import phonenumbers.phonenumberutil
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from django.templatetags.static import static
-from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ListField, IntegerField
@@ -14,7 +9,6 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from rest_framework.serializers import Serializer, ModelSerializer
-from rest_framework.serializers import CharField
 
 from .models import Product, Order, OrderItem
 
@@ -93,7 +87,13 @@ class OrderSerializer(ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('firstname', 'lastname', 'phonenumber', 'address', 'products')
+        fields = (
+            'firstname',
+            'lastname',
+            'phonenumber',
+            'address',
+            'products'
+        )
 
 
 @api_view(['POST'])
@@ -118,7 +118,7 @@ def register_order(request):
     for product_item in order_serializer.validated_data['products']:
         try:
             product = Product.objects.get(pk=product_item['product'])
-            order_item = OrderItem.objects.create(
+            OrderItem.objects.create(
                 item=product,
                 quantity=product_item['quantity'],
                 order=order,
@@ -126,7 +126,8 @@ def register_order(request):
             )
         except ObjectDoesNotExist:
             return Response({
-                'error': f'Product with code {product_item["product"]} does not exist',
+                'error': f'Product with code {product_item["product"]}'
+                         f' does not exist',
             }, status=status.HTTP_200_OK)
 
     return Response(order_serializer.data)

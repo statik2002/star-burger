@@ -1,7 +1,6 @@
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
 from django.db import transaction
-from django.forms import forms, NumberInput
+from django.forms import NumberInput
 from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
@@ -52,8 +51,6 @@ class ProductAdmin(admin.ModelAdmin):
         'category',
     ]
     search_fields = [
-        # FIXME SQLite can not convert letter case for cyrillic words properly, so search will be buggy.
-        # Migration to PostgreSQL is necessary
         'name',
         'category__name',
     ]
@@ -96,14 +93,21 @@ class ProductAdmin(admin.ModelAdmin):
     def get_image_preview(self, obj):
         if not obj.image:
             return 'выберите картинку'
-        return format_html('<img src="{url}" style="max-height: 200px;"/>', url=obj.image.url)
+        return format_html(
+            '<img src="{url}" style="max-height: 200px;"/>',
+            url=obj.image.url
+        )
     get_image_preview.short_description = 'превью'
 
     def get_image_list_preview(self, obj):
         if not obj.image or not obj.id:
             return 'нет картинки'
         edit_url = reverse('admin:foodcartapp_product_change', args=(obj.id,))
-        return format_html('<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>', edit_url=edit_url, src=obj.image.url)
+        return format_html(
+            '<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>',
+            edit_url=edit_url,
+            src=obj.image.url
+        )
     get_image_list_preview.short_description = 'превью'
 
 
@@ -127,7 +131,8 @@ class OrderItemAdmin(admin.TabularInline):
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'quantity':
             kwargs['widget'] = NumberInput(attrs={'min': '1'})
-        return super(OrderItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+        return super(
+            OrderItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
 
 def restaurants_serializer(restaurants):
@@ -139,7 +144,8 @@ def restaurants_serializer(restaurants):
             {
                 'name': restaurant.name,
                 'available_products': [
-                    menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
+                    menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability
+                ],
                 'id': restaurant.pk,
                 'address': restaurant.address,
             }
@@ -152,7 +158,12 @@ def restaurants_serializer(restaurants):
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
 
-    list_display = ('id', 'lastname', 'firstname', 'phonenumber', 'order_status')
+    list_display = ('id',
+                    'lastname',
+                    'firstname',
+                    'phonenumber',
+                    'order_status'
+                    )
 
     @transaction.atomic
     def save_formset(self, request, form, formset, change):
@@ -191,14 +202,26 @@ class OrderAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if not db_field.name == "production_restaurant":
-            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            return super().formfield_for_foreignkey(
+                db_field, request, **kwargs
+            )
 
         if not request.resolver_match.kwargs.get('object_id'):
-            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            return super().formfield_for_foreignkey(
+                db_field,
+                request,
+                **kwargs
+            )
 
-        order = Order.objects.prefetch_related('order_items__item').get(pk=request.resolver_match.kwargs.get('object_id'))
-        items_in_order = {order_item.item.name for order_item in order.order_items.all()}
-        restaurants = Restaurant.objects.prefetch_related('menu_items__product').all()
+        order = Order.objects.prefetch_related('order_items__item').get(
+            pk=request.resolver_match.kwargs.get('object_id')
+        )
+        items_in_order = {
+            order_item.item.name for order_item in order.order_items.all()
+        }
+        restaurants = Restaurant.objects.prefetch_related(
+            'menu_items__product'
+        ).all()
         serialized_restaurants = restaurants_serializer(restaurants)
 
         restaurants_ids = []
@@ -210,4 +233,3 @@ class OrderAdmin(admin.ModelAdmin):
         kwargs["queryset"] = selected_restaurant
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
