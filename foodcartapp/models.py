@@ -287,7 +287,7 @@ class Order(models.Model):
     lastname = models.CharField('Фамилия', max_length=200, db_index=True)
     phonenumber = PhoneNumberField('Номер телефона', max_length=12)
     address = models.CharField('Адрес', max_length=250)
-    order_status = models.CharField(
+    status = models.CharField(
         'Статус заказа',
         max_length=3,
         choices=ORDER_STATUS_CHOICES,

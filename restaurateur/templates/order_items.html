@@ -31,7 +31,7 @@
     {% for order_item in order_items %}
       <tr>
         <td>{{ order_item.pk }}</td>
-        <td>{{ order_item.get_order_status_display }}</td>
+        <td>{{ order_item.get_status_display }}</td>
         <td>{{ order_item.get_payment_type_display }}</td>
         <td>{{ order_item.total|intcomma }} &#8381;</td>
         <td>{{ order_item.firstname }} {{ order_item.lastname }}</td>

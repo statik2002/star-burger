@@ -162,7 +162,7 @@ class OrderAdmin(admin.ModelAdmin):
                     'lastname',
                     'firstname',
                     'phonenumber',
-                    'order_status'
+                    'status'
                     )
 
     @transaction.atomic
@@ -183,7 +183,7 @@ class OrderAdmin(admin.ModelAdmin):
                 instance.save()
 
         if form_instance.production_restaurant:
-            form_instance.order_status = 'AS'
+            form_instance.status = 'AS'
 
         formset.save_m2m()
         form_instance.save()
