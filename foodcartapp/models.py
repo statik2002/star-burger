@@ -281,6 +281,7 @@ class Order(models.Model):
     ORDER_PAYMENT_CHOICES = [
         ('CA', 'Наличка'),
         ('EL', 'Электронно'),
+        ('DF', 'Не определено')
     ]
 
     firstname = models.CharField('Имя', max_length=100, db_index=True)
@@ -316,7 +317,7 @@ class Order(models.Model):
         'Тип оплаты',
         max_length=3,
         choices=ORDER_PAYMENT_CHOICES,
-        default='CA',
+        default='DF',
         db_index=True
     )
     production_restaurant = models.ForeignKey(
