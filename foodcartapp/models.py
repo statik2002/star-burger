@@ -183,7 +183,7 @@ def restaurants_serializer(restaurant):
 
 class OrderQuerySet(models.QuerySet):
 
-    def calc_order(self):
+    def get_amount(self):
         return self.annotate(
             total=Sum(F('order_items__quantity') * F('order_items__price'))
         )
@@ -323,7 +323,8 @@ class Order(models.Model):
     production_restaurant = models.ForeignKey(
         Restaurant,
         verbose_name='Заказ готовит ресторан',
-        on_delete=models.CASCADE, related_name='production_restaurant',
+        on_delete=models.CASCADE,
+        related_name='production_restaurant',
         blank=True,
         null=True
     )
