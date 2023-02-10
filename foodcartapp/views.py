@@ -113,7 +113,7 @@ def register_order(request):
     if not order_serializer.validated_data['products']:
         return Response({
             'error': 'Products is empty',
-        }, status=status.HTTP_200_OK)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     for product_item in order_serializer.validated_data['products']:
         try:
@@ -128,6 +128,6 @@ def register_order(request):
             return Response({
                 'error': f'Product with code {product_item["product"]}'
                          f' does not exist',
-            }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(order_serializer.data)
