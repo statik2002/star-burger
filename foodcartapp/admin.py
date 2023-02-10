@@ -213,11 +213,11 @@ class OrderAdmin(admin.ModelAdmin):
                 **kwargs
             )
 
-        order = Order.objects.prefetch_related('order_items__product').get(
+        order = Order.objects.prefetch_related('items__product').get(
             pk=request.resolver_match.kwargs.get('object_id')
         )
         items_in_order = {
-            order_item.product.name for order_item in order.order_items.all()
+            order_item.product.name for order_item in order.items.all()
         }
         restaurants = Restaurant.objects.prefetch_related(
             'menu_items__product'

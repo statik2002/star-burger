@@ -147,7 +147,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(
         'Order',
         on_delete=models.CASCADE,
-        related_name='order_items'
+        related_name='items'
     )
     price = models.DecimalField(
         'Цена продукта',
@@ -170,7 +170,7 @@ class OrderQuerySet(models.QuerySet):
 
     def get_amount(self):
         return self.annotate(
-            total=Sum(F('order_items__quantity') * F('order_items__price'))
+            total=Sum(F('items__quantity') * F('items__price'))
         )
 
     def select_restaurants(self):
@@ -192,7 +192,7 @@ class OrderQuerySet(models.QuerySet):
         for order in self:
             available_restaurants = []
             items_in_order = {
-                order_item.product.name for order_item in order.order_items.all()
+                order_item.product.name for order_item in order.items.all()
             }
             for restaurant in serialized_restaurants:
                 if items_in_order.issubset(restaurant['available_products']):
