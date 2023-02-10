@@ -133,11 +133,6 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-def validate_price(value):
-    if not value:
-        return 0.0
-
-
 class OrderItem(models.Model):
     item = models.ForeignKey(
         'Product',
