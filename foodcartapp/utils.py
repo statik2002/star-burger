@@ -17,3 +17,13 @@ def fetch_coordinates(apikey, address):
     most_relevant = found_places[0]
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
     return lat, lon
+
+
+def restaurants_serializer(restaurant):
+    return {
+        'name': restaurant.name,
+        'available_products': [
+            menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
+        'id': restaurant.pk,
+        'address': restaurant.address,
+    }

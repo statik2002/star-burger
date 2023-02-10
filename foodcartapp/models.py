@@ -8,7 +8,7 @@ from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
 from addresses.models import Place
-from foodcartapp.utils import fetch_coordinates
+from foodcartapp.utils import fetch_coordinates, restaurants_serializer
 from star_burger import settings
 
 
@@ -169,16 +169,6 @@ class OrderItem(models.Model):
     def clean(self):
         if self.price is None:
             self.price = self.item.price
-
-
-def restaurants_serializer(restaurant):
-    return {
-        'name': restaurant.name,
-        'available_products': [
-            menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability],
-        'id': restaurant.pk,
-        'address': restaurant.address,
-    }
 
 
 class OrderQuerySet(models.QuerySet):
