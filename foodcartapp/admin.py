@@ -121,12 +121,12 @@ class OrderItemAdmin(admin.TabularInline):
 
     extra = 1
 
-    fields = ('item', 'quantity', 'get_product_price', 'price')
+    fields = ('product', 'quantity', 'get_product_price', 'price')
     readonly_fields = ('get_product_price', )
 
     @admin.display(description='Цена в каталоге')
     def get_product_price(self, obj):
-        return obj.item.price
+        return obj.product.price
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'quantity':
@@ -213,11 +213,11 @@ class OrderAdmin(admin.ModelAdmin):
                 **kwargs
             )
 
-        order = Order.objects.prefetch_related('order_items__item').get(
+        order = Order.objects.prefetch_related('order_items__product').get(
             pk=request.resolver_match.kwargs.get('object_id')
         )
         items_in_order = {
-            order_item.item.name for order_item in order.order_items.all()
+            order_item.product.name for order_item in order.order_items.all()
         }
         restaurants = Restaurant.objects.prefetch_related(
             'menu_items__product'

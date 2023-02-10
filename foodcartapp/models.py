@@ -134,7 +134,7 @@ class RestaurantMenuItem(models.Model):
 
 
 class OrderItem(models.Model):
-    item = models.ForeignKey(
+    product = models.ForeignKey(
         'Product',
         on_delete=models.CASCADE,
         related_name='products',
@@ -192,7 +192,7 @@ class OrderQuerySet(models.QuerySet):
         for order in self:
             available_restaurants = []
             items_in_order = {
-                order_item.item.name for order_item in order.order_items.all()
+                order_item.product.name for order_item in order.order_items.all()
             }
             for restaurant in serialized_restaurants:
                 if items_in_order.issubset(restaurant['available_products']):

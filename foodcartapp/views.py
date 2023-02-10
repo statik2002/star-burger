@@ -119,7 +119,7 @@ def register_order(request):
         try:
             product = Product.objects.get(pk=product_item['product'])
             OrderItem.objects.create(
-                item=product,
+                product=product,
                 quantity=product_item['quantity'],
                 order=order,
                 price=product.price
