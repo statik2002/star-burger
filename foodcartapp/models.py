@@ -295,18 +295,18 @@ class Order(models.Model):
         db_index=True
     )
     comment = models.TextField('Комментарий к заказу', blank=True)
-    registered_datetime = models.DateTimeField(
+    registered_at = models.DateTimeField(
         'Время регистрации заказа',
         default=timezone.now,
         db_index=True
     )
-    called_datetime = models.DateTimeField(
+    called_at = models.DateTimeField(
         'Время звонка',
         blank=True,
         null=True,
         db_index=True
     )
-    delivered_datetime = models.DateTimeField(
+    delivered_at = models.DateTimeField(
         'Время доставки',
         blank=True,
         null=True,
