@@ -9,7 +9,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from addresses.models import Place
 from foodcartapp.serializators import restaurants_serializer
-from foodcartapp.yandex_geo_api import fetch_coordinates
+from addresses.yandex_geo_api import fetch_coordinates
 from star_burger import settings
 
 
