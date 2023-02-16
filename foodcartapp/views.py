@@ -115,19 +115,24 @@ def register_order(request):
             'error': 'Products is empty',
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    order_items = []
+
     for product_item in order_serializer.validated_data['products']:
         try:
             product = Product.objects.get(pk=product_item['product'])
-            OrderItem.objects.create(
+            order_item = OrderItem(
                 product=product,
                 quantity=product_item['quantity'],
                 order=order,
                 price=product.price
             )
+            order_items.append(order_item)
         except ObjectDoesNotExist:
             return Response({
                 'error': f'Product with code {product_item["product"]}'
                          f' does not exist',
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    OrderItem.objects.bulk_create(order_items)
 
     return Response(order_serializer.data)

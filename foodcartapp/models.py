@@ -138,7 +138,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(
         'Product',
         on_delete=models.CASCADE,
-        related_name='products',
+        related_name='order_items',
         verbose_name='Продукт'
     )
     quantity = models.IntegerField(
@@ -148,7 +148,8 @@ class OrderItem(models.Model):
     order = models.ForeignKey(
         'Order',
         on_delete=models.CASCADE,
-        related_name='items'
+        related_name='items',
+        verbose_name='Заказ'
     )
     price = models.DecimalField(
         'Цена продукта',
@@ -178,16 +179,13 @@ class OrderQuerySet(models.QuerySet):
 
         restaurants = Restaurant.objects.prefetch_related(
             'menu_items__product'
-        )
-        serialized_restaurants = [restaurants_serializer(restaurant) for restaurant in restaurants]
-
-        restaurants_and_orders_addresses = [
-            serialized_restaurant['address'] for serialized_restaurant in serialized_restaurants
+        ).prefetch_related('orders')
+        serialized_restaurants = [
+            restaurants_serializer(restaurant) for restaurant in restaurants
         ]
-        restaurants_and_orders_addresses += [order.address for order in self]
 
         places = Place.objects.filter(
-            address__in=restaurants_and_orders_addresses
+            address__in=[restaurant['address'] for restaurant in serialized_restaurants]+[order.address for order in self]
         )
 
         for order in self:
@@ -196,56 +194,60 @@ class OrderQuerySet(models.QuerySet):
                 order_item.product.name for order_item in order.items.all()
             }
             for restaurant in serialized_restaurants:
-                if items_in_order.issubset(restaurant['available_products']):
-                    order_place = list(
+                if not items_in_order.issubset(
+                    restaurant['available_products']
+                ):
+                    continue
+
+                order_place = list(
+                    filter(
+                        lambda place: (place.address == order.address),
+                        places
+                    )
+                )
+                if not order_place:
+                    lat, lon = fetch_coordinates(
+                        settings.YANDEX_GEO_API_KEY,
+                        order.address
+                    )
+                    order_place, created = Place.objects.update_or_create(
+                        address=order.address,
+                        defaults={
+                            'lat': lat,
+                            'lon': lon
+                        }
+                    )
+                else:
+                    order_place = order_place[0]
+
+                try:
+                    restaurant_place = list(
                         filter(
-                            lambda place: (place.address == order.address),
+                            lambda place: (
+                                place.address == restaurant['address']
+                            ),
                             places
                         )
                     )
-                    if not order_place:
-                        coordinates = fetch_coordinates(
-                            settings.YANDEX_GEO_API_KEY,
-                            order.address
-                        )
-                        order_place, created = Place.objects.update_or_create(
-                            address=order.address,
-                            defaults={
-                                'lat': coordinates[0],
-                                'lon': coordinates[1]
-                            }
-                        )
-                    else:
-                        order_place = order_place[0]
-
-                    try:
-                        restaurant_place = list(
-                            filter(
-                                lambda place: (
-                                    place.address == restaurant['address']
-                                ),
-                                places
-                            )
-                        )
-                    except ObjectDoesNotExist:
-                        restaurant_coord = fetch_coordinates(
-                            settings.YANDEX_GEO_API_KEY,
-                            restaurant.address
-                        )
-                        restaurant_place = Place.objects.create(
-                            address=restaurant['address'],
-                            lat=restaurant_coord[0],
-                            lon=restaurant_coord[1],
-                            last_updated=timezone.now()
-                        )
-
-                    restaurant['distance'] = int(
-                        distance.distance(
-                            order_place.get_coordinates(),
-                            restaurant_place[0].get_coordinates()
-                        ).km
+                except ObjectDoesNotExist:
+                    lat, lon = fetch_coordinates(
+                        settings.YANDEX_GEO_API_KEY,
+                        restaurant.address
                     )
-                    available_restaurants.append(restaurant)
+                    restaurant_place = Place.objects.create(
+                        address=restaurant['address'],
+                        lat=lat,
+                        lon=lon,
+                        last_updated=timezone.now()
+                    )
+
+                restaurant['distance'] = int(
+                    distance.distance(
+                        order_place.get_coordinates(),
+                        restaurant_place[0].get_coordinates()
+                    ).km
+                )
+                available_restaurants.append(restaurant)
 
             order.available_restaurants = sorted(
                 available_restaurants,
@@ -310,16 +312,16 @@ class Order(models.Model):
         Restaurant,
         verbose_name='Заказ готовит ресторан',
         on_delete=models.CASCADE,
-        related_name='production_restaurant',
+        related_name='orders',
         blank=True,
         null=True
     )
 
+    objects = OrderQuerySet.as_manager()
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
-
-    objects = OrderQuerySet.as_manager()
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} ({str(self.phonenumber)})'
