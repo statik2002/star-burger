@@ -173,11 +173,7 @@ class OrderAdmin(admin.ModelAdmin):
         for obj in formset.deleted_objects:
             obj.delete()
 
-        if not inline_instances:
-            for instance in inline_instances:
-                instance.price = Product.objects.get(instance).price
-                instance.save()
-        else:
+        if inline_instances:
             for instance in inline_instances:
                 instance.price = instance.price
                 instance.save()
