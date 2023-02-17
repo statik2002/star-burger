@@ -135,25 +135,6 @@ class OrderItemAdmin(admin.TabularInline):
             OrderItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
 
-def restaurants_serializer(restaurants):
-
-    serialized_restaurants = []
-
-    for restaurant in restaurants:
-        serialized_restaurants.append(
-            {
-                'name': restaurant.name,
-                'available_products': [
-                    menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability
-                ],
-                'id': restaurant.pk,
-                'address': restaurant.address,
-            }
-        )
-
-    return serialized_restaurants
-
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemAdmin]
@@ -218,12 +199,14 @@ class OrderAdmin(admin.ModelAdmin):
         restaurants = Restaurant.objects.prefetch_related(
             'menu_items__product'
         ).all()
-        serialized_restaurants = restaurants_serializer(restaurants)
 
         restaurants_ids = []
-        for restaurant in serialized_restaurants:
-            if items_in_order.issubset(restaurant['available_products']):
-                restaurants_ids.append(restaurant['id'])
+        for restaurant in restaurants:
+            restaurant_available_products = [
+                menu_item.product.name for menu_item in restaurant.menu_items.all() if menu_item.availability
+            ]
+            if items_in_order.issubset(restaurant_available_products):
+                restaurants_ids.append(restaurant.pk)
 
         selected_restaurant = Restaurant.objects.filter(id__in=restaurants_ids)
         kwargs["queryset"] = selected_restaurant
