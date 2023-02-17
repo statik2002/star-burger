@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from geopy import distance
 from operator import itemgetter
 from django.db import models
@@ -205,41 +204,16 @@ class OrderQuerySet(models.QuerySet):
                         places
                     )
                 )
-                if not order_place:
-                    lat, lon = fetch_coordinates(
-                        settings.YANDEX_GEO_API_KEY,
-                        order.address
-                    )
-                    order_place, created = Place.objects.update_or_create(
-                        address=order.address,
-                        defaults={
-                            'lat': lat,
-                            'lon': lon
-                        }
-                    )
-                else:
-                    order_place = order_place[0]
+                order_place = order_place[0]
 
-                try:
-                    restaurant_place = list(
-                        filter(
-                            lambda place: (
-                                place.address == restaurant['address']
-                            ),
-                            places
-                        )
+                restaurant_place = list(
+                    filter(
+                        lambda place: (
+                            place.address == restaurant['address']
+                        ),
+                        places
                     )
-                except ObjectDoesNotExist:
-                    lat, lon = fetch_coordinates(
-                        settings.YANDEX_GEO_API_KEY,
-                        restaurant.address
-                    )
-                    restaurant_place = Place.objects.create(
-                        address=restaurant['address'],
-                        lat=lat,
-                        lon=lon,
-                        last_updated=timezone.now()
-                    )
+                )
 
                 restaurant['distance'] = int(
                     distance.distance(
@@ -325,3 +299,25 @@ class Order(models.Model):
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} ({str(self.phonenumber)})'
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+
+        lat, lon = fetch_coordinates(
+            settings.YANDEX_GEO_API_KEY,
+            self.address
+        )
+        place_obj, created = Place.objects.update_or_create(
+            address=self.address,
+            defaults={
+                'lat': lat,
+                'lon': lon
+            }
+        )
+
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
