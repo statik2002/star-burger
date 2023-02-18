@@ -10,6 +10,9 @@ from rest_framework import status
 
 from rest_framework.serializers import Serializer, ModelSerializer
 
+from addresses.models import Place
+from addresses.yandex_geo_api import fetch_coordinates
+from star_burger import settings
 from .models import Product, Order, OrderItem
 
 
@@ -108,6 +111,18 @@ def register_order(request):
         lastname=order_serializer.validated_data['lastname'],
         phonenumber=order_serializer.validated_data['phonenumber'],
         address=order_serializer.validated_data['address']
+    )
+
+    lat, lon = fetch_coordinates(
+        settings.YANDEX_GEO_API_KEY,
+        order_serializer['address']
+    )
+    place_obj, created = Place.objects.update_or_create(
+        address=order.address,
+        defaults={
+            'lat': lat,
+            'lon': lon
+        }
     )
 
     if not order_serializer.validated_data['products']:

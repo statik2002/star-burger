@@ -300,24 +300,3 @@ class Order(models.Model):
     def __str__(self):
         return f'{self.firstname} {self.lastname} ({str(self.phonenumber)})'
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-
-        lat, lon = fetch_coordinates(
-            settings.YANDEX_GEO_API_KEY,
-            self.address
-        )
-        place_obj, created = Place.objects.update_or_create(
-            address=self.address,
-            defaults={
-                'lat': lat,
-                'lon': lon
-            }
-        )
-
-        super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
