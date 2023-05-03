@@ -156,6 +156,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_ACCESS_TOKEN` - Токен в сервисе Rollbar
 - `ROLLBAR_DEV_ENV` - Наименование сервера разработки
 - `ROLLBAR_POD_ENV` - Наименование сервера в продакшене
+- `DB_CONFIG` - URL с настройками БД Postgresql в виде `postgres://USER:PASSWORD@HOST:PORT/NAME`
 
 ## Цели проекта
 

@@ -86,10 +86,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
-    )
+    'default': dj_database_url.parse(env('DB_CONFIG'))
 }
+
+
+#DATABASES = {
+#    'default': dj_database_url.config(
+#        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
+#    )
+#}
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -106,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'ru-RU'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
