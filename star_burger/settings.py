@@ -90,13 +90,6 @@ DATABASES = {
 }
 
 
-#DATABASES = {
-#    'default': dj_database_url.config(
-#        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
-#    )
-#}
-
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

@@ -158,6 +158,8 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_POD_ENV` - Наименование сервера в продакшене
 - `DB_CONFIG` - URL с настройками БД Postgresql в виде `postgres://USER:PASSWORD@HOST:PORT/NAME`
 
+На сервере запустить файл `deploy_star_burger.sh` для подготовки деплоя
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
