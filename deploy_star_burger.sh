@@ -2,6 +2,7 @@
 
 set -e
 
+git stash
 git pull
 
 git rev-parse HEAD
