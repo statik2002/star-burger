@@ -7,7 +7,7 @@ set -e
 
 COMMIT_HASH=`git rev-parse HEAD`
 
-curl -H "X-Rollbar-Access-Token: 133ebaa4f3a34cebb5030d9b7e84a169" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "development", "revision": "echo $COMMIT_HASH", "rollbar_name": "statik2002", "local_username": "statik2002", "comment": "intermediater deployment", "status": "succeeded"}'
+curl -H "X-Rollbar-Access-Token: 133ebaa4f3a34cebb5030d9b7e84a169" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "development", "revision": "'$COMMIT_HASH'", "rollbar_name": "statik2002", "local_username": "'$USER'", "comment": "intermediate deployment", "status": "succeeded"}'
 
 source env/bin/activate
 
