@@ -4,7 +4,9 @@ set -e
 
 git pull
 
-curl -H "X-Rollbar-Access-Token: 133ebaa4f3a34cebb5030d9b7e84a169" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "qa", "revision": "dc1f74dee5", "rollbar_name": "john", "local_username": "circle-ci", "comment": "Tuesday deployment", "status": "succeeded"}'
+git rev-parse HEAD
+
+curl -H "X-Rollbar-Access-Token: 133ebaa4f3a34cebb5030d9b7e84a169" -H "Content-Type: application/json" -X POST 'https://api.rollbar.com/api/1/deploy' -d '{"environment": "dev", "revision": "dc1f74dee5", "rollbar_name": "statik2002", "local_username": "statik2002", "comment": "Tuesday deployment", "status": "succeeded"}'
 
 source env/bin/activate
 
