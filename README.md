@@ -154,8 +154,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `YANDEX_GEO_API_KEY` — API ключ Яндекс Гео. Дял получения [см. инструкцию](https://yandex.ru/dev/maps/geocoder/)
 - `ROLLBAR_ACCESS_TOKEN` - Токен в сервисе Rollbar
-- `ROLLBAR_DEV_ENV` - Наименование сервера разработки
-- `ROLLBAR_POD_ENV` - Наименование сервера в продакшене
+- `ROLLBAR_ENV` - Наименование окружения для Rollbar (Например `development` или `production`, по умолчанию стоит `development`)
 - `DB_CONFIG` - URL с настройками БД Postgresql в виде `postgres://USER:PASSWORD@HOST:PORT/NAME`
 
 На сервере запустить файл `deploy_star_burger.sh` для подготовки деплоя.
