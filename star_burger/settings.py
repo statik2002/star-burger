@@ -131,7 +131,7 @@ YANDEX_GEO_API_KEY = env.str('YANDEX_GEO_API_KEY')
 
 ROLLBAR = {
     'access_token': env('ROLLBAR_ACCESS_TOKEN'),
-    'environment': env('ROLLBAR_DEV_ENV') if DEBUG else env('ROLLBAR_POD_ENV'),
+    'environment': env('ROLLBAR_DEV_ENV', 'development') if DEBUG else env('ROLLBAR_POD_ENV', 'production'),
     'code_version': '1.0',
     'root': BASE_DIR,
 }
