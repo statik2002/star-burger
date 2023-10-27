@@ -153,8 +153,11 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `YANDEX_GEO_API_KEY` — API ключ Яндекс Гео. Дял получения [см. инструкцию](https://yandex.ru/dev/maps/geocoder/)
-- `ROLLBAR_ACCESS_TOKEN` - Токен в сервисе Rollbar
-- `ROLLBAR_ENV` - Наименование окружения для Rollbar (Например `development` или `production`, по умолчанию стоит `development`)
+- `ROLLBAR_ENABLED` - Подключать Rollbar или нет
+
+    Если ROLLBAR_ENABLED=True, то необходимо указать следующие переменные в `.env`
+  - `ROLLBAR_ACCESS_TOKEN` - Токен в сервисе Rollbar
+  - `ROLLBAR_ENV` - Наименование окружения для Rollbar (Например `development` или `production`, по умолчанию стоит `development`)
 - `DB_CONFIG` - URL с настройками БД Postgresql в виде `postgres://USER:PASSWORD@HOST:PORT/NAME`
 
 На сервере запустить файл `deploy_star_burger.sh` для подготовки деплоя.
