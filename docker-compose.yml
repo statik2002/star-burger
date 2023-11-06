@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+
+  parcel:
+    build: frontend_deploy
+    env_file:
+      - .env
+    volumes:
+      - $FRONTEND_PATH:/usr/app/staticfiles
+    command: ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
+  web-static:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/www/
+      - $FRONTEND_PATH:/www/staticfiles
+    command: python manage.py collectstatic --noinput
+    depends_on:
+      - parcel
+
+  web:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/www/
+      - $MEDIA_PATH:/www/media
+      - $FRONTEND_PATH:/www/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - web-static
+
+  db:
+    image: postgres:14.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - .env
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DB
+
+volumes:
+  postgres_data:
+  frontend:
+  media:
+

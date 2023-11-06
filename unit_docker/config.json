@@ -1,0 +1,15 @@
+{
+    "listeners": {
+        "*:8000": {
+                "application": "star-burger"
+        }
+    },
+
+    "applications": {
+        "star-burger": {
+                "type": "python 3.11",
+                "path": "/www/",
+                "module": "star_burger.wsgi"
+        }
+    }
+}

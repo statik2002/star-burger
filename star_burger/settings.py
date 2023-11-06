@@ -27,10 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.postgres',
     'debug_toolbar',
     'phonenumber_field',
     'rest_framework',
-    'addresses.apps.AddressesConfig'
+    'addresses.apps.AddressesConfig',
 ]
 
 MIDDLEWARE = [
@@ -115,7 +116,10 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
+if DEBUG:
+    STATIC_URL = 'static/'
+else:
+    STATIC_URL = env('FRONTEND_PATH')
 
 INTERNAL_IPS = [
     '127.0.0.1'
