@@ -4,6 +4,8 @@ set -e
 
 COMMIT_HASH=`git rev-parse HEAD`
 
+mkdir -p "frontend_deploy"
+
 cp -f package.json frontend_deploy/package.json
 cp -f package-lock.json frontend_deploy/package-lock.json
 cp -r bundles-src frontend_deploy/bundles-src
