@@ -116,10 +116,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-if DEBUG:
-    STATIC_URL = 'static/'
-else:
-    STATIC_URL = env('FRONTEND_PATH')
 
 INTERNAL_IPS = [
     '127.0.0.1'
@@ -129,6 +125,8 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
     os.path.join(BASE_DIR, "bundles"),
 ]
+
+STATIC_URL = 'static/'
 
 YANDEX_GEO_API_KEY = env.str('YANDEX_GEO_API_KEY')
 
