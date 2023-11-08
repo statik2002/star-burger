@@ -164,6 +164,19 @@ Parcel будет следить за файлами в каталоге `bundle
 
 Ссылка на сайт [Star-burger](https://codeplus.ru/)
 
+## Сборка и запуск prod-версии сайта на сервере
+
+Добавить в файл `.env` следующие параметры:
+- `POSTGRES_USER`=Имя пользователя БД
+- `POSTGRES_PASSWORD`=пароль к БД
+- `POSTGRES_DB`=Название БД
+- `MEDIA_PATH`=Полный пусть к директории с MEDIA на сервере
+- `FRONTEND_PATH`=Полный путь к директории с STATICFILES на сервере
+
+В настройках nginx сайта указать media location и staticfiles location
+
+запустить ./deploy_star_burger.sh
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).

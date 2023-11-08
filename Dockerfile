@@ -11,6 +11,5 @@ COPY . .
 COPY unit_docker/config.json /docker-entrypoint.d/.unit.conf.json
 
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-#CMD ["python", "manage.py", "migrate"]
 CMD ["unitd", "--no-daemon", "--control", "unix:/var/run/control.unit.sock"]
 
